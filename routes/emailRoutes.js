@@ -268,6 +268,195 @@ This is an automated message. Please do not reply to this email.`,
   }
 });
 
+// POST endpoint to send password reset OTP
+router.post('/send-password-reset', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is required' 
+      });
+    }
+
+    if (!otp) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'OTP is required' 
+      });
+    }
+
+    if (!process.env.SENDGRID_API_KEY) {
+      console.error('SENDGRID_API_KEY not found in environment variables');
+      return res.status(500).json({
+        success: false,
+        message: 'Email service not configured.'
+      });
+    }
+
+    const emailContent = {
+      sender: {
+        email: 'henrymosesuk1@gmail.com',
+        name: 'TripsByMoses Admin System'
+      },
+      to: [
+        {
+          email: email
+        }
+      ],
+      replyTo: {
+        email: 'henrymosesuk1@gmail.com',
+        name: 'TripsByMoses Support'
+      },
+      subject: 'Password Reset Request - TripsByMoses Admin Panel',
+      textContent: `Password Reset Request
+
+You have requested to reset your password for TripsByMoses Admin Panel.
+
+Your One-Time Password (OTP): ${otp}
+
+This OTP will expire in 15 minutes.
+
+If you did not request this password reset, please ignore this email or contact support immediately.
+
+Best regards,
+TripsByMoses Admin Team
+
+---
+This is an automated message. Please do not reply to this email.`,
+      htmlContent: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Reset Request</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; max-width: 600px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          
+          <tr>
+            <td style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); padding: 40px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 style="color: #ffffff; font-size: 28px; margin: 0; font-weight: bold;">TripsByMoses</h1>
+              <p style="color: #e3f2fd; font-size: 16px; margin: 10px 0 0 0;">Password Reset Request</p>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding: 40px;">
+              <h2 style="color: #1976d2; font-size: 24px; margin: 0 0 20px 0;">Reset Your Password</h2>
+              <p style="color: #424242; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+                You have requested to reset your password for TripsByMoses Admin Panel.
+              </p>
+              <p style="color: #424242; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0;">
+                Use the One-Time Password below to complete your password reset:
+              </p>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding: 0 40px 30px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5; border-radius: 8px; border: 2px solid #1976d2;">
+                <tr>
+                  <td style="padding: 30px; text-align: center;">
+                    <p style="color: #757575; font-size: 14px; margin: 0 0 10px 0;">Your One-Time Password (OTP)</p>
+                    <p style="color: #d32f2f; font-size: 32px; font-weight: bold; margin: 0; letter-spacing: 8px; font-family: 'Courier New', monospace;">${otp}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding: 0 40px 30px 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="color: #e65100; font-size: 14px; margin: 0; line-height: 1.6;">
+                      <strong>Security Note:</strong> This OTP will expire in 15 minutes. If you did not request this password reset, please ignore this email or contact support immediately.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <tr>
+            <td style="padding: 30px 40px; background-color: #f5f5f5; border-radius: 0 0 8px 8px; border-top: 1px solid #e0e0e0;">
+              <p style="color: #757575; font-size: 14px; text-align: center; margin: 0 0 10px 0;">
+                If you have any questions or need assistance, please contact our support team.
+              </p>
+              <p style="color: #9e9e9e; font-size: 12px; text-align: center; margin: 0;">
+                Best regards,<br>
+                <strong>TripsByMoses Admin Team</strong>
+              </p>
+              <p style="color: #bdbdbd; font-size: 11px; text-align: center; margin: 20px 0 0 0;">
+                This is an automated message. Please do not reply to this email.
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+    };
+
+    const response = await fetch(BREVO_API_URL, {
+      method: 'POST',
+      headers: {
+        'api-key': process.env.SENDGRID_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(emailContent)
+    });
+
+    if (response.ok || response.status === 201) {
+      console.log('Password reset OTP sent successfully to:', email);
+      return res.json({ 
+        success: true, 
+        message: 'Password reset OTP sent successfully' 
+      });
+    } else {
+      const errorText = await response.text();
+      let errorDetails;
+      
+      try {
+        errorDetails = JSON.parse(errorText);
+      } catch (e) {
+        errorDetails = { message: errorText };
+      }
+
+      console.error('Brevo API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorDetails
+      });
+
+      return res.status(response.status).json({
+        success: false,
+        message: 'Failed to send password reset email',
+        error: errorDetails.errors || errorDetails.message || 'Unknown error',
+        statusCode: response.status
+      });
+    }
+
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Error sending password reset email',
+      error: error.message
+    });
+  }
+});
+
 // Test endpoint to verify setup
 router.get('/test', (req, res) => {
   const apiKeySet = !!process.env.SENDGRID_API_KEY;
