@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const SENDGRID_API_URL = 'https://api.sendgrid.com/v3/mail/send';
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
 // Generate a random one-time password
 const generateOneTimePassword = () => {
@@ -43,32 +43,22 @@ router.post('/send-admin-welcome', async (req, res) => {
     }
 
     const emailContent = {
-      personalizations: [
-        {
-          to: [
-            {
-              email: adminData.email,
-              name: `${adminData.firstName} ${adminData.lastName}`
-            }
-          ],
-          subject: 'Welcome to TripsByMoses Admin Panel - Setup Your Account'
-        }
-      ],
-      from: {
-
-        // THIS IS MY PERSONAL EMAIL IT MUST BE CHANGED TO THE COMPANY ONE
-
-        email: 'divinmathems58@gmail.com', // MUST be verified in SendGrid 
+      sender: {
+        email: 'divinmathems58@gmail.com', // MUST be verified in Brevo
         name: 'TripsByMoses Admin System'
       },
-      reply_to: {
+      to: [
+        {
+          email: adminData.email,
+          name: `${adminData.firstName} ${adminData.lastName}`
+        }
+      ],
+      replyTo: {
         email: 'divinmathems58@gmail.com',
         name: 'TripsByMoses Support'
       },
-      content: [
-        {
-          type: 'text/plain',
-          value: `Welcome to TripsByMoses Admin Panel!
+      subject: 'Welcome to TripsByMoses Admin Panel - Setup Your Account',
+      textContent: `Welcome to TripsByMoses Admin Panel!
 
 Dear ${adminData.firstName} ${adminData.lastName},
 
@@ -95,11 +85,8 @@ Best regards,
 TripsByMoses Admin Team
 
 ---
-This is an automated message. Please do not reply to this email.`
-        },
-        {
-          type: 'text/html',
-          value: `<!DOCTYPE html>
+This is an automated message. Please do not reply to this email.`,
+      htmlContent: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -226,26 +213,20 @@ This is an automated message. Please do not reply to this email.`
   </table>
 </body>
 </html>`
-        }
-      ],
-      tracking_settings: {
-        click_tracking: { enable: false },
-        open_tracking: { enable: false }
-      }
     };
 
-    // Make request to SendGrid API
-    const response = await fetch(SENDGRID_API_URL, {
+    // Make request to Brevo API
+    const response = await fetch(BREVO_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+        'api-key': process.env.SENDGRID_API_KEY, // Using same env var for compatibility
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(emailContent)
     });
 
-    // SendGrid returns 202 for successful email acceptance
-    if (response.ok || response.status === 202) {
+    // Brevo returns 201 for successful email sending
+    if (response.ok || response.status === 201) {
       console.log('Welcome email sent successfully to:', adminData.email);
       return res.json({ 
         success: true, 
@@ -262,7 +243,7 @@ This is an automated message. Please do not reply to this email.`
         errorDetails = { message: errorText };
       }
 
-      console.error('SendGrid API Error:', {
+      console.error('Brevo API Error:', {
         status: response.status,
         statusText: response.statusText,
         error: errorDetails
@@ -296,9 +277,10 @@ router.get('/test', (req, res) => {
 
   res.json({
     status: 'Email service is running',
+    service: 'Brevo (Sendinblue)',
     apiKeyConfigured: apiKeySet,
     apiKeyPreview: apiKeyPreview,
-    endpoint: SENDGRID_API_URL
+    endpoint: BREVO_API_URL
   });
 });
 
