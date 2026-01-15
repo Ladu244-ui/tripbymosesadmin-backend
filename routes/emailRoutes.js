@@ -44,7 +44,7 @@ router.post('/send-admin-welcome', async (req, res) => {
 
     const emailContent = {
       sender: {
-        email: 'divinmathems58@gmail.com', // MUST be verified in Brevo
+        email: 'henrymosesuk1@gmail.com', 
         name: 'TripsByMoses Admin System'
       },
       to: [
@@ -54,7 +54,7 @@ router.post('/send-admin-welcome', async (req, res) => {
         }
       ],
       replyTo: {
-        email: 'divinmathems58@gmail.com',
+        email: 'henrymosesuk1@gmail.com',
         name: 'TripsByMoses Support'
       },
       subject: 'Welcome to TripsByMoses Admin Panel - Setup Your Account',
@@ -219,7 +219,7 @@ This is an automated message. Please do not reply to this email.`,
     const response = await fetch(BREVO_API_URL, {
       method: 'POST',
       headers: {
-        'api-key': process.env.SENDGRID_API_KEY, // Using same env var for compatibility
+        'api-key': process.env.SENDGRID_API_KEY, 
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(emailContent)
